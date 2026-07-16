@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APEXランクマップ切り替え通知 登録</title>
+<script>
+  // ==== デプロイ時に書き換える設定値（プレースホルダ、1箇所に集約：成果物レビュー
+  //      指摘10。従来はscriptタグのrenderパラメータとJS内2変数の計3箇所に分散して
+  //      おりデプロイ時の置換漏れに気づきにくかったため、このオブジェクト1箇所のみを
+  //      書き換えれば済む形にした） ====
+  //   WEB_APP_URL: Google Apps Script Web Appをデプロイした後に発行されるURL
+  //     （例: https://script.google.com/macros/s/XXXXXXXX/exec）に置き換えること。
+  //   RECAPTCHA_SITE_KEY: reCAPTCHA v3管理画面で発行したサイトキー（公開情報）。
+  window.APEX_MAP_NOTIFY_CONFIG = {
+    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxtoYqbOYNvCqgImxxFWkVdzxtDb2eOJRpONlgeFdI2T0jxQ7e7fSugnhztfba4UJA/exec',
+    RECAPTCHA_SITE_KEY: 'RECAPTCHA_SITE_KEY_PLACEHOLDER'
+  };
+  // reCAPTCHA v3 スクリプトを上記サイトキーから動的に組み立てて読み込む
+  // （render=パラメータをHTMLに静的記述せず、JS変数から生成することで
+  // プレースホルダの記述箇所を1つに保つ）。
+  (function () {
+    var s = document.createElement('script');
+    s.src = 'https://www.google.com/recaptcha/api.js?render='
+      + encodeURIComponent(window.APEX_MAP_NOTIFY_CONFIG.RECAPTCHA_SITE_KEY);
+    document.head.appendChild(s);
+  })();
+</script>
+<style>
+  body {
+    font-family: -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    max-width: 640px;
+    margin: 2em auto;
+    padding: 0 1em;
+    line-height: 1.7;
+    color: #222;
+  }
+  h1 {
+    font-size: 1.4em;
+    border-bottom: 2px solid #d64545;
+    padding-bottom: 0.3em;
+  }
+  form {
+    margin: 1.5em 0;
+    display: flex;
+    gap: 0.5em;
+    flex-wrap: wrap;
+  }
+  input[type="email"] {
+    flex: 1 1 260px;
+    padding: 0.6em 0.8em;
+    font-size: 1em;
+    border: 1px solid #999;
+    border-radius: 4px;
+  }
+  button {
+    padding: 0.6em 1.4em;
+    font-size: 1em;
+    background: #d64545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:disabled {
+    background: #bbb;
+    cursor: not-allowed;
+  }
+  #resultMessage {
+    font-weight: bold;
+    min-height: 1.5em;
+  }
+  #resultMessage.error {
+    color: #c00;
+  }
+  #resultMessage.ok {
+    color: #086b08;
+  }
+  .note {
+    font-size: 0.85em;
+    color: #666;
+  }
+  footer {
+    margin-top: 3em;
+    font-size: 0.85em;
+    color: #666;
+    border-top: 1px solid #ddd;
+    padding-top: 1em;
+  }
+</style>
+</head>
+<body>
+
+<h1>APEXランクマップ切り替え通知 登録</h1>
+
+<p>
+Apex Legendsのランクマップが切り替わる約20〜40分前に、登録したメールアドレス宛へ
+通知メールをお送りします。本サービスは個人運営の非公式ツールであり、
+Electronic Arts / Respawn Entertainmentとは無関係です。
+</p>
+
+<form id="registerForm">
+  <input type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="email">
+  <button type="submit" id="submitBtn">登録する</button>
+</form>
+
+<p id="resultMessage" role="status"></p>
+
+<p class="note">
+登録すると、入力したメールアドレス宛に確認メールが届きます。
+メール内のリンクをクリックすることで登録が確定します（確認メールが届かない場合は、
+迷惑メールフォルダをご確認いただくか、再度フォームから送信してください）。
+</p>
+
+<footer>
+<p><a href="privacy.html">運営者情報・個人情報の取り扱いについて（情報提供ページ）はこちら</a></p>
+<p>本サービスは無料の個人運営サービスであり、登録者数には上限があります。上限に達した場合、新規登録をお断りする場合があります。</p>
+<ul class="note">
+<li>※本サービスはやむを得ず予告なく終了・一時停止することがあります。</li>
+<li>※通知メールの内容の正確性・到達を保証するものではありません。</li>
+<li>※配信停止は、通知メール本文のリンクからいつでも行えます。</li>
+<li>※メールが届かない場合は、迷惑メールフォルダをご確認ください。</li>
+</ul>
+</footer>
+
+<script>
+(function () {
+  // 設定値はhead内のwindow.APEX_MAP_NOTIFY_CONFIGに1箇所集約している（成果物レビュー
+  // 指摘10）。ここでは参照するのみで、値自体はここでは書き換えない。
+  var WEB_APP_URL = window.APEX_MAP_NOTIFY_CONFIG.WEB_APP_URL;
+  var RECAPTCHA_SITE_KEY = window.APEX_MAP_NOTIFY_CONFIG.RECAPTCHA_SITE_KEY;
+
+  var form = document.getElementById('registerForm');
+  var emailInput = document.getElementById('email');
+  var submitBtn = document.getElementById('submitBtn');
+  var resultEl = document.getElementById('resultMessage');
+
+  function showResult(message, isError) {
+    resultEl.textContent = message;
+    resultEl.className = isError ? 'error' : 'ok';
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var email = emailInput.value.trim();
+    if (!email) {
+      return;
+    }
+
+    if (WEB_APP_URL.indexOf('REPLACE_WITH') === 0) {
+      showResult('設定未完了のため送信できません（WEB_APP_URL未設定）。管理者にお問い合わせください。', true);
+      return;
+    }
+
+    submitBtn.disabled = true;
+    showResult('送信中です…', false);
+
+    if (typeof grecaptcha === 'undefined') {
+      showResult('reCAPTCHAの読み込みに失敗しました。時間をおいて再度お試しください。', true);
+      submitBtn.disabled = false;
+      return;
+    }
+
+    grecaptcha.ready(function () {
+      grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'register' }).then(function (token) {
+        // Google Apps ScriptのWeb Appは標準機能ではCORSプリフライト(OPTIONS)を
+        // 処理できないため、Content-Type: text/plainで送信してプリフライトを
+        // 発生させず、GAS側（Code.gs doPost）でJSON.parseする（定石の回避策）。
+        fetch(WEB_APP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ email: email, recaptchaToken: token })
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            var isError = data.status !== 'ok';
+            showResult(data.message || (isError ? '登録に失敗しました。' : '登録を受け付けました。'), isError);
+            submitBtn.disabled = false;
+          })
+          .catch(function () {
+            showResult('通信エラーが発生しました。時間をおいて再度お試しください。', true);
+            submitBtn.disabled = false;
+          });
+      }).catch(function () {
+        showResult('reCAPTCHAの検証準備に失敗しました。時間をおいて再度お試しください。', true);
+        submitBtn.disabled = false;
+      });
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
