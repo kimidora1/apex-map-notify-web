@@ -80,6 +80,27 @@
     font-size: 0.85em;
     color: #666;
   }
+  .mail-example {
+    margin: 1.2em 0;
+    padding: 1em 1.2em;
+    background: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+  }
+  .mail-example-title {
+    margin: 0 0 0.6em;
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #444;
+  }
+  .mail-example-body {
+    margin: 0;
+    font-family: "SFMono-Regular", Consolas, "Courier New", monospace;
+    font-size: 0.85em;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #333;
+  }
   footer {
     margin-top: 3em;
     font-size: 0.85em;
@@ -97,6 +118,21 @@
 Apex Legendsのランクマップが切り替わる約20〜40分前に、登録したメールアドレス宛へ
 通知メールをお送りします。
 </p>
+
+<div class="mail-example">
+<p class="mail-example-title">配信されるメールのイメージ</p>
+<pre class="mail-example-body">件名: [APEXランクマップ通知] まもなく世界の果てに切り替わります
+
+Apexランクマップがまもなく切り替わります。
+
+現在のマップ: オリンパス
+次のマップ: 世界の果て
+切り替え予定時刻: 2026/07/17 21:00 (JST)
+残り時間: 約30分
+
+このメールは自動送信されました。
+配信停止をご希望の場合は、登録時に届いた確認メール内の配信停止リンクをご利用ください。</pre>
+</div>
 
 <form id="registerForm">
   <input type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="email">
