@@ -162,9 +162,7 @@
 
 <h1>APEXランクマップ切り替え通知 登録</h1>
 
-<p class="prep-banner">
-このサービスは準備中です。
-</p>
+<p class="prep-banner" id="prepBanner" style="display:none;"></p>
 
 <p>
 Apex Legendsのランクマップが切り替わる約20〜40分前に、登録したメールアドレス宛へ
@@ -275,6 +273,33 @@ Apexランクマップがまもなく切り替わります。
       });
     });
   });
+})();
+
+// 設計書_準備中バナートグル化.md②：ページロード時にAppsScript側の
+// MAINTENANCE_MODE状態を取得し、trueの場合のみ準備中バナーを表示する。
+// キャッシュ制御（cache: 'no-store'）により、メンテナンス通知の即時反映を
+// ブラウザ・CDN等のキャッシュより優先する（設計レビュー指摘③対応）。
+(function () {
+  var WEB_APP_URL = window.APEX_MAP_NOTIFY_CONFIG.WEB_APP_URL;
+  var prepBanner = document.getElementById('prepBanner');
+
+  if (WEB_APP_URL.indexOf('REPLACE_WITH') === 0) {
+    return;
+  }
+
+  fetch(WEB_APP_URL + '?action=status', { cache: 'no-store' })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data && data.maintenance === true) {
+        prepBanner.textContent = data.message || 'このサービスは準備中です。';
+        prepBanner.style.display = '';
+      }
+    })
+    .catch(function (err) {
+      // フェッチ失敗時は安全側としてバナーを表示しない（従来の「準備中」誤表示
+      // 残存問題の逆の失敗モードを避けるため）。原因追跡のためログのみ残す。
+      console.warn('メンテナンス状態の取得に失敗しました:', err);
+    });
 })();
 </script>
 
