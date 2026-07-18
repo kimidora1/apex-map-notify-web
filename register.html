@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>APEXランクマップ切り替え通知 登録</title>
+<link rel="icon" type="image/png" href="images/mirage_icon.png">
 <script>
   // ==== デプロイ時に書き換える設定値（プレースホルダ、1箇所に集約：成果物レビュー
   //      指摘10。従来はscriptタグのrenderパラメータとJS内2変数の計3箇所に分散して
@@ -72,10 +73,23 @@
     background: var(--bg);
     color: var(--text);
   }
-  h1 {
-    font-size: 1.4em;
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
     border-bottom: 2px solid var(--accent);
     padding-bottom: 0.3em;
+  }
+  .mascot-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    flex-shrink: 0;
+  }
+  h1 {
+    font-size: 1.4em;
+    margin: 0;
   }
   form {
     margin: 1.5em 0;
@@ -160,7 +174,10 @@
 </head>
 <body>
 
+<div class="page-header">
+<img src="images/mirage_icon.png" alt="" class="mascot-icon">
 <h1>APEXランクマップ切り替え通知 登録</h1>
+</div>
 
 <p class="prep-banner" id="prepBanner" style="display:none;"></p>
 
