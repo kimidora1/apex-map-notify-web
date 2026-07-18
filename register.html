@@ -210,6 +210,14 @@ Apexランクマップがまもなく切り替わります。
 </footer>
 
 <script>
+// 成果物レビュー指摘（軽微）：「WEB_APP_URLが未設定・プレースホルダのままか」の判定が
+// フォーム送信処理（下のIIFE）とステータス取得処理（末尾のIIFE）の2箇所に重複して
+// いたため、共通ヘルパーへ切り出し両方から呼び出す形にする。関数宣言はスクリプト
+// タグ内のトップレベルに置き、両IIFEから参照できるようにする。
+function isWebAppUrlConfigured_(url) {
+  return url.indexOf('REPLACE_WITH') !== 0;
+}
+
 (function () {
   // 設定値はhead内のwindow.APEX_MAP_NOTIFY_CONFIGに1箇所集約している（成果物レビュー
   // 指摘10）。ここでは参照するのみで、値自体はここでは書き換えない。
@@ -233,7 +241,7 @@ Apexランクマップがまもなく切り替わります。
       return;
     }
 
-    if (WEB_APP_URL.indexOf('REPLACE_WITH') === 0) {
+    if (!isWebAppUrlConfigured_(WEB_APP_URL)) {
       showResult('設定未完了のため送信できません（WEB_APP_URL未設定）。管理者にお問い合わせください。', true);
       return;
     }
@@ -283,21 +291,35 @@ Apexランクマップがまもなく切り替わります。
   var WEB_APP_URL = window.APEX_MAP_NOTIFY_CONFIG.WEB_APP_URL;
   var prepBanner = document.getElementById('prepBanner');
 
-  if (WEB_APP_URL.indexOf('REPLACE_WITH') === 0) {
+  if (!isWebAppUrlConfigured_(WEB_APP_URL)) {
     return;
   }
 
-  fetch(WEB_APP_URL + '?action=status', { cache: 'no-store' })
+  // 成果物レビュー指摘（軽微）：ステータス取得fetchにタイムアウト制御がなく、
+  // サーバー側の応答が極端に遅延・無応答な場合にfetchがいつまでも保留され得たため、
+  // AbortController + setTimeoutで5秒を上限にabortする。タイムアウト時もcatchへ
+  // 到達するため、通常のフェッチ失敗時と同じ安全側フォールバック（バナー非表示＋
+  // console.warn）に自然に合流する。
+  var STATUS_FETCH_TIMEOUT_MS = 5000;
+  var statusAbortController = new AbortController();
+  var statusTimeoutId = setTimeout(function () {
+    statusAbortController.abort();
+  }, STATUS_FETCH_TIMEOUT_MS);
+
+  fetch(WEB_APP_URL + '?action=status', { cache: 'no-store', signal: statusAbortController.signal })
     .then(function (res) { return res.json(); })
     .then(function (data) {
+      clearTimeout(statusTimeoutId);
       if (data && data.maintenance === true) {
         prepBanner.textContent = data.message || 'このサービスは準備中です。';
         prepBanner.style.display = '';
       }
     })
     .catch(function (err) {
-      // フェッチ失敗時は安全側としてバナーを表示しない（従来の「準備中」誤表示
-      // 残存問題の逆の失敗モードを避けるため）。原因追跡のためログのみ残す。
+      clearTimeout(statusTimeoutId);
+      // フェッチ失敗時（タイムアウトによるabortを含む）は安全側としてバナーを表示しない
+      // （従来の「準備中」誤表示残存問題の逆の失敗モードを避けるため）。原因追跡のため
+      // ログのみ残す。
       console.warn('メンテナンス状態の取得に失敗しました:', err);
     });
 })();
